@@ -1,0 +1,8 @@
+*.md
+*.txt
+*.log
+.env
+.env.local
+*.sql.bak
+*.backup
+

@@ -1,0 +1,651 @@
+openapi: 3.0.3
+info:
+  title: Omnichannel Backend API
+  description: |
+    Robust Omnichannel Backend API dengan support untuk WhatsApp dan channel lainnya.
+    Support untuk WhatsApp Official Cloud API dan whatsapp-web.js.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Channels
+    description: Channel management endpoints
+  - name: Conversations
+    description: Conversation management endpoints
+  - name: Messages
+    description: Message sending endpoints
+  - name: Webhooks
+    description: Webhook endpoints for receiving messages
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check API health and channel connectivity
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /channels:
+    get:
+      tags:
+        - Channels
+      summary: Get all channels
+      operationId: getAllChannels
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+
+    post:
+      tags:
+        - Channels
+      summary: Create channel
+      operationId: createChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Channel created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Channel'
+
+  /channels/{id}:
+    get:
+      tags:
+        - Channels
+      summary: Get channel by ID
+      operationId: getChannelById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Channel'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Channels
+      summary: Update channel
+      operationId: updateChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateChannelRequest'
+      responses:
+        '200':
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Channel'
+
+  /channels/{id}/initialize:
+    post:
+      tags:
+        - Channels
+      summary: Initialize channel
+      operationId: initializeChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Channel initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /channels/{id}/send:
+    post:
+      tags:
+        - Messages
+      summary: Send message
+      operationId: sendMessage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/SendTextMessageRequest'
+                - $ref: '#/components/schemas/SendMediaMessageRequest'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      messageId:
+                        type: string
+
+  /conversations:
+    get:
+      tags:
+        - Conversations
+      summary: Get all conversations
+      operationId: getAllConversations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+
+    post:
+      tags:
+        - Conversations
+      summary: Create conversation
+      operationId: createConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConversationRequest'
+      responses:
+        '201':
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Conversation'
+
+  /conversations/{id}:
+    get:
+      tags:
+        - Conversations
+      summary: Get conversation by ID
+      operationId: getConversationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Conversation details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Conversation'
+
+    patch:
+      tags:
+        - Conversations
+      summary: Update conversation
+      operationId: updateConversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConversationRequest'
+      responses:
+        '200':
+          description: Conversation updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Conversation'
+
+  /conversations/{id}/messages:
+    get:
+      tags:
+        - Conversations
+      summary: Get messages in conversation
+      operationId: getConversationMessages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+  /webhooks/whatsapp:
+    get:
+      tags:
+        - Webhooks
+      summary: WhatsApp webhook verification
+      description: Verify webhook for WhatsApp Cloud API
+      operationId: verifyWhatsAppWebhook
+      parameters:
+        - name: hub.mode
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification successful
+          content:
+            text/plain:
+              schema:
+                type: string
+        '403':
+          description: Verification failed
+
+    post:
+      tags:
+        - Webhooks
+      summary: Receive WhatsApp webhook
+      description: Receive incoming messages and status updates
+      operationId: receiveWhatsAppWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhatsAppWebhook'
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+components:
+  schemas:
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        config:
+          type: object
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateChannelRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        config:
+          type: object
+        isActive:
+          type: boolean
+          default: true
+
+    UpdateChannelRequest:
+      type: object
+      properties:
+        config:
+          type: object
+        isActive:
+          type: boolean
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        channelId:
+          type: integer
+        externalId:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        contactInfo:
+          type: object
+          nullable: true
+        status:
+          type: string
+          enum: [open, closed, archived]
+        metadata:
+          type: object
+          nullable: true
+        lastMessageAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateConversationRequest:
+      type: object
+      required:
+        - channelId
+        - externalId
+      properties:
+        channelId:
+          type: integer
+        externalId:
+          type: string
+        contactName:
+          type: string
+        contactInfo:
+          type: object
+
+    UpdateConversationRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, closed, archived]
+        contactName:
+          type: string
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        channelId:
+          type: integer
+        externalMessageId:
+          type: string
+          nullable: true
+        direction:
+          type: string
+          enum: [inbound, outbound]
+        type:
+          type: string
+        content:
+          type: string
+        mediaUrl:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [sent, delivered, read, failed]
+        metadata:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SendTextMessageRequest:
+      type: object
+      required:
+        - to
+        - message
+      properties:
+        to:
+          type: string
+          description: Phone number in international format (without +)
+          example: "6281234567890"
+        message:
+          type: string
+        type:
+          type: string
+          enum: [text]
+          default: text
+
+    SendMediaMessageRequest:
+      type: object
+      required:
+        - to
+        - mediaUrl
+      properties:
+        to:
+          type: string
+        mediaUrl:
+          type: string
+          description: For Cloud API, must be HTTP/HTTPS URL. For whatsapp-web.js, can be data URL.
+        caption:
+          type: string
+        type:
+          type: string
+          enum: [image, video, audio, document]
+          default: image
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              isConnected:
+                type: boolean
+
+    WhatsAppWebhook:
+      type: object
+      properties:
+        object:
+          type: string
+        entry:
+          type: array
+          items:
+            type: object
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "Resource not found"
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+              details:
+                type: array
+
